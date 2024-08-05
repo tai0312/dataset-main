@@ -15,6 +15,7 @@ import java.util.Random;
 public class GamePanel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
+    private static final int PANEL_PASS_COUNT = 5; // パネル通過のカウントをここで定義
     private Thread thread;
     private boolean running;
     private Soldier soldier;
@@ -28,9 +29,6 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     private boolean startScreen;
     private int score;
     private int level;
-    private static final int PANEL_PASS_COUNT = 5;
-    private static final int PANEL_FALL_SPEED = 2;
-    private static final int OBSTACLE_FALL_SPEED = 3;
     private Random random;
 
     public GamePanel() {
@@ -43,7 +41,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         panelPasses = 0;
         bossFight = false;
         startScreen = true;
-        score = 0;
+        score = 1; // スコアの初期値を1に設定
         level = 1;
         random = new Random();
         initializeGameObjects();
@@ -89,6 +87,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
                 } else {
                     gameOver = true;
                     System.out.println("You lose!");
+                    resetToStartScreen();
                 }
             }
             return;
@@ -113,7 +112,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             bossFight = true;
             panels.clear();
             obstacles.clear();
-            boss = new Boss(WIDTH / 2 - 100, -100, calculateMaxScore(score) / 2, Color.RED);
+            boss = new Boss(WIDTH / 2 - 100, -100, (int) (calculateMaxScore(score) * 0.2), Color.RED); // 取りうる最大スコアの20％をボスのスコアに設定
         }
     }
 
@@ -156,6 +155,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
                 soldier.getY() + 20 > obstacle.getY()) {
                 gameOver = true;
                 System.out.println("Hit an obstacle!");
+                resetToStartScreen();
                 return;
             }
         }
@@ -172,6 +172,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             int value = Integer.parseInt(operation.substring(1));
             score -= value;
         }
+
+        if (score < 1) {
+            score = 1; // スコアが1未満にならないようにする
+        }
     }
 
     private void initializeGameObjects() {
@@ -184,6 +188,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             max += 10;
         }
         return max;
+    }
+
+    private void resetToStartScreen() {
+        startScreen = true;
+        running = false;
     }
 
     @Override
@@ -246,7 +255,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             gameWon = false;
         } else if (startScreen) {
             startScreen = false;
-            startGame();
+            resetGame();
         }
     }
 
@@ -262,7 +271,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     public void mousePressed(MouseEvent e) {
         if (startScreen) {
             startScreen = false;
-            startGame();
+            resetGame();
         } else if (gameOver && e.getButton() == MouseEvent.BUTTON1) {
             resetGame();
         } else if (!gameOver && gameWon) {
@@ -305,7 +314,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         gameWon = false;
         panelPasses = 0;
         bossFight = false;
-        score = 0;
+        score = 1; // スコアの初期値を1にリセット
         level = 1;
         initializeGameObjects();
         startGame();

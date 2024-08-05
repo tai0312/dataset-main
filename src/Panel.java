@@ -5,7 +5,6 @@ public class Panel {
     private int x, y;
     private Color color;
     private String operation;
-    private static final int FALL_SPEED = 2;
 
     public Panel(int x, int y, String operation) {
         this.x = x;
@@ -19,7 +18,7 @@ public class Panel {
     }
 
     public void update() {
-        y += FALL_SPEED;
+        y += 2; // パネルの降下速度を固定
     }
 
     public void draw(Graphics g) {
