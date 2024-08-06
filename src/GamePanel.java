@@ -28,7 +28,6 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     private boolean bossFight;
     private boolean startScreen;
     private int score;
-    private int level;
     private Random random;
 
     public GamePanel() {
@@ -42,7 +41,6 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         bossFight = false;
         startScreen = true;
         score = 1; // スコアの初期値を1に設定
-        level = 1;
         random = new Random();
         initializeGameObjects();
         addKeyListener(this);
@@ -315,7 +313,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         panelPasses = 0;
         bossFight = false;
         score = 1; // スコアの初期値を1にリセット
-        level = 1;
+
         initializeGameObjects();
         startGame();
     }
