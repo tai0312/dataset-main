@@ -116,7 +116,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             bossFight = true;
             panels.clear();
             obstacles.clear();
-            boss = new Boss(WIDTH / 2 - 100, -100, (int) (calculateMaxScore(score) * 0.2), Color.RED); // 取りうる最大スコアの20％をボスのスコアに設定
+            boss = new Boss(0, -100, (int) (calculateMaxScore(score) * 0.2), Color.RED); // ボスの横幅を広げる
         }
     }
 
@@ -143,14 +143,21 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
             return; // クールダウンタイム中はパネルを収集しない
         }
 
+        int soldierSize = 20;
+        int padding = 5; // 当たり判定のパディングを追加
+
         for (int i = 0; i < panels.size(); i++) {
             Panel panel = panels.get(i);
-            if (soldier.getX() < panel.getX() + panel.getWidth() &&
-                soldier.getX() + 20 > panel.getX() &&
-                soldier.getY() < panel.getY() + panel.getHeight() &&
-                soldier.getY() + 20 > panel.getY()) {
+            if (soldier.getX() + padding < panel.getX() + panel.getWidth() &&
+                soldier.getX() + soldierSize - padding > panel.getX() &&
+                soldier.getY() + padding < panel.getY() + panel.getHeight() &&
+                soldier.getY() + soldierSize - padding > panel.getY()) {
                 applyOperation(panel.getOperation());
                 panels.remove(i);
+                // 取得しなかったもう一つのパネルを削除
+                if (!panels.isEmpty()) {
+                    panels.remove(0);
+                }
                 panelPasses++;
                 lastPanelCollectedTime = currentTime; // パネルを収集した時間を更新
                 break; // 1フレームで1つのパネルのみ収集
@@ -160,13 +167,31 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         for (int i = 0; i < obstacles.size(); i++) {
             Obstacle obstacle = obstacles.get(i);
             if (soldier.getX() < obstacle.getX() + obstacle.getSize() &&
-                soldier.getX() + 20 > obstacle.getX() &&
+                soldier.getX() + soldierSize > obstacle.getX() &&
                 soldier.getY() < obstacle.getY() + obstacle.getSize() &&
-                soldier.getY() + 20 > obstacle.getY()) {
+                soldier.getY() + soldierSize > obstacle.getY()) {
                 gameOver = true;
                 System.out.println("Hit an obstacle!");
                 resetToStartScreen();
                 return;
+            }
+        }
+
+        // ボスとの衝突判定
+        if (bossFight && soldier.getX() < boss.getX() + boss.getWidth() &&
+            soldier.getX() + soldierSize > boss.getX() &&
+            soldier.getY() < boss.getY() + boss.getHeight() &&
+            soldier.getY() + soldierSize > boss.getY()) {
+            if (score >= boss.getRequiredSoldiers()) {
+                gameWon = true;
+                bossFight = false;
+                panelPasses = 0;
+                soldier.setY(HEIGHT - 50);
+                initializeGameObjects();
+            } else {
+                gameOver = true;
+                System.out.println("You lose!");
+                resetToStartScreen();
             }
         }
     }
