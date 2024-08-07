@@ -16,6 +16,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
     private static final int PANEL_PASS_COUNT = 5; // パネル通過のカウントをここで定義
+    private static final int PANEL_FALL_SPEED = 2; // パネルの降下速度
+    private static final long PANEL_COOLDOWN = 1000; // パネル取得後のクールダウンタイム（ミリ秒）
     private Thread thread;
     private boolean running;
     private Soldier soldier;
@@ -28,11 +30,13 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     private boolean bossFight;
     private boolean startScreen;
     private int score;
+    private int level;
     private Random random;
+    private long lastPanelCollectedTime; // 最後にパネルを取得した時間
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        soldier = new Soldier(WIDTH / 2, HEIGHT - 50, Color.BLUE);
+        soldier = new Soldier(WIDTH / 4, HEIGHT - 50, Color.BLUE); // 左側から開始するように位置を変更
         panels = new ArrayList<>();
         obstacles = new ArrayList<>();
         gameOver = false;
@@ -41,7 +45,9 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         bossFight = false;
         startScreen = true;
         score = 1; // スコアの初期値を1に設定
+        level = 1;
         random = new Random();
+        lastPanelCollectedTime = 0; // 初期値
         initializeGameObjects();
         addKeyListener(this);
         addMouseListener(this);
@@ -132,6 +138,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     }
 
     private void checkCollisions() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastPanelCollectedTime < PANEL_COOLDOWN) {
+            return; // クールダウンタイム中はパネルを収集しない
+        }
+
         for (int i = 0; i < panels.size(); i++) {
             Panel panel = panels.get(i);
             if (soldier.getX() < panel.getX() + panel.getWidth() &&
@@ -141,7 +152,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
                 applyOperation(panel.getOperation());
                 panels.remove(i);
                 panelPasses++;
-                break;
+                lastPanelCollectedTime = currentTime; // パネルを収集した時間を更新
+                break; // 1フレームで1つのパネルのみ収集
             }
         }
 
@@ -244,9 +256,13 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
         if (key == KeyEvent.VK_A) {
-            soldier.moveLeft();
+            if (soldier.getX() > 0) {
+                soldier.moveLeft();
+            }
         } else if (key == KeyEvent.VK_D) {
-            soldier.moveRight();
+            if (soldier.getX() < WIDTH - 20) {
+                soldier.moveRight();
+            }
         } else if (key == KeyEvent.VK_R && gameOver) {
             resetGame();
         } else if (!gameOver && gameWon) {
@@ -305,7 +321,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     }
 
     private void resetGame() {
-        soldier = new Soldier(WIDTH / 2, HEIGHT - 50, Color.BLUE);
+        soldier = new Soldier(WIDTH / 4, HEIGHT - 50, Color.BLUE); // 左側から開始するように位置を変更
         panels.clear();
         obstacles.clear();
         gameOver = false;
@@ -313,7 +329,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         panelPasses = 0;
         bossFight = false;
         score = 1; // スコアの初期値を1にリセット
-
+        level = 1;
+        lastPanelCollectedTime = 0; // クールダウンタイムをリセット
         initializeGameObjects();
         startGame();
     }
