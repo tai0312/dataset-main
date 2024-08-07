@@ -20,7 +20,7 @@ public class Soldier {
 
     public void resetXMinMax(){
         xMin = 0;
-        xMax = GamePanel.WIDTH-30;
+        xMax = GamePanel.WIDTH-20;
     }
 
     public void moveLeft() {
